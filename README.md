@@ -1,6 +1,6 @@
 # OVH Cloud Manager
 
-Wrapper for OVH cloud API. For now, designed to interact with the AI Training part of cloud services.
+Wrapper for OVH Cloud API. For now, designed to interact with the AI Training part of Cloud services.
 
 Rust structures to fit with API form/response objects.
 
