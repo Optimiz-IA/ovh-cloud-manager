@@ -1,9 +1,9 @@
 use std::error::Error;
 
 use crate::cloud::OvhCloudManager;
+use crate::handlers::{empty_response_to_result, response_to_result};
 use crate::schemas::ai::jobs::spec::JobSpec;
 use crate::schemas::ai::jobs::AIJob;
-use crate::{handle_empty_response, handle_response};
 
 impl OvhCloudManager {
     pub async fn list_ai_jobs(
@@ -14,7 +14,7 @@ impl OvhCloudManager {
         let url = format!("/cloud/project/{}/ai/job", project_id);
         let response = self.client.get(&url, parameters).await?;
 
-        handle_response!(response, Vec<AIJob>)
+        response_to_result(response).await
     }
 
     pub async fn get_ai_job(
@@ -25,7 +25,7 @@ impl OvhCloudManager {
         let url = format!("/cloud/project/{}/ai/job/{}", project_id, job_id);
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, AIJob)
+        response_to_result(response).await
     }
 
     pub async fn create_ai_job(
@@ -36,7 +36,7 @@ impl OvhCloudManager {
         let url = format!("/cloud/project/{}/ai/job", project_id);
         let response = self.client.post(&url, data).await?;
 
-        handle_response!(response, AIJob)
+        response_to_result(response).await
     }
 
     pub async fn delete_ai_job(
@@ -52,6 +52,6 @@ impl OvhCloudManager {
             false => self.client.delete(&url, None).await?,
         };
 
-        handle_empty_response!(response)
+        empty_response_to_result(response).await
     }
 }

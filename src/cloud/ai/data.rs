@@ -1,8 +1,8 @@
 use std::error::Error;
 
 use crate::cloud::OvhCloudManager;
+use crate::handlers::{empty_response_to_result, response_to_result};
 use crate::schemas::ai::data::{DatastoreAlias, FormDatastoreAlias};
-use crate::{handle_empty_response, handle_response};
 
 impl OvhCloudManager {
     pub async fn list_ai_aliases(
@@ -16,7 +16,7 @@ impl OvhCloudManager {
         );
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, Vec<DatastoreAlias>)
+        response_to_result(response).await
     }
 
     pub async fn get_ai_alias(
@@ -31,7 +31,7 @@ impl OvhCloudManager {
         );
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, DatastoreAlias)
+        response_to_result(response).await
     }
 
     pub async fn create_ai_alias(
@@ -46,7 +46,7 @@ impl OvhCloudManager {
         );
         let response = self.client.post(&url, data).await?;
 
-        handle_response!(response, DatastoreAlias)
+        response_to_result(response).await
     }
 
     pub async fn update_ai_alias(
@@ -62,7 +62,7 @@ impl OvhCloudManager {
         );
         let response = self.client.post(&url, data).await?;
 
-        handle_empty_response!(response)
+        empty_response_to_result(response).await
     }
 
     pub async fn delete_ai_alias(
@@ -77,6 +77,6 @@ impl OvhCloudManager {
         );
         let response = self.client.delete(&url, None).await?;
 
-        handle_empty_response!(response)
+        empty_response_to_result(response).await
     }
 }

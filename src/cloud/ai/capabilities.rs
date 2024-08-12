@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use crate::cloud::OvhCloudManager;
-use crate::handle_response;
+use crate::handlers::response_to_result;
 use crate::schemas::ai::capabilities::AIFlavor;
 use crate::schemas::ai::AIQuota;
 
@@ -13,7 +13,7 @@ impl OvhCloudManager {
         let url = format!("/cloud/project/{}/ai/capabilities/quota", project_id);
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, AIQuota)
+        response_to_result(response).await
     }
 
     pub async fn list_ai_flavors(
@@ -27,7 +27,7 @@ impl OvhCloudManager {
         );
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, Vec<AIFlavor>)
+        response_to_result(response).await
     }
 
     pub async fn get_ai_flavor_details(
@@ -42,6 +42,6 @@ impl OvhCloudManager {
         );
         let response = self.client.get(&url, None).await?;
 
-        handle_response!(response, AIFlavor)
+        response_to_result(response).await
     }
 }

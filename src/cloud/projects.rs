@@ -1,12 +1,12 @@
 use std::error::Error;
 
 use super::OvhCloudManager;
-use crate::handle_response;
+use crate::handlers::response_to_result;
 
 impl OvhCloudManager {
     pub async fn list_project_ids(&self) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
         let response = self.client.get("/cloud/project", None).await?;
 
-        handle_response!(response, Vec<String>)
+        response_to_result(response).await
     }
 }
