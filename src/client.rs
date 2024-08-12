@@ -69,6 +69,22 @@ impl OvhClient {
         format!("{}{}", self.endpoint, path)
     }
 
+    fn format_url_with_params(
+        &self,
+        path: &str,
+        parameters: Option<&[(&str, &str)]>,
+    ) -> Result<String, OvhManagerError> {
+        let url = self.format_url(path);
+
+        match parameters {
+            Some(values) => match Url::parse_with_params(&url, values) {
+                Ok(value) => Ok(value.to_string()),
+                Err(_) => Err(OvhManagerError::ParseUrlError),
+            },
+            None => Ok(url),
+        }
+    }
+
     pub async fn get_server_time(&self) -> Result<u64, OvhManagerError> {
         let headers = self.create_base_headers();
 
@@ -160,15 +176,7 @@ impl OvhClient {
         path: &str,
         parameters: Option<&[(&str, &str)]>,
     ) -> Result<reqwest::Response, OvhManagerError> {
-        let mut url = self.format_url(path);
-
-        if let Some(values) = parameters {
-            url = match Url::parse_with_params(&url, values) {
-                Ok(value) => value.to_string(),
-                Err(_) => return Err(OvhManagerError::ParseUrlError),
-            }
-        }
-
+        let url = self.format_url_with_params(path, parameters)?;
         let headers = self.create_headers("GET", &url, "").await?;
         let response = self.http_client.get(url).headers(headers).send().await?;
 
@@ -180,15 +188,7 @@ impl OvhClient {
         path: &str,
         parameters: Option<&[(&str, &str)]>,
     ) -> Result<reqwest::Response, OvhManagerError> {
-        let mut url = self.format_url(path);
-
-        if let Some(values) = parameters {
-            url = match Url::parse_with_params(&url, values) {
-                Ok(value) => value.to_string(),
-                Err(_) => return Err(OvhManagerError::ParseUrlError),
-            }
-        }
-
+        let url = self.format_url_with_params(path, parameters)?;
         let headers = self.create_headers("DELETE", &url, "").await?;
         let response = self.http_client.delete(url).headers(headers).send().await?;
 
