@@ -1,6 +1,5 @@
-use std::error::Error;
-
 use crate::cloud::OvhCloudManager;
+use crate::errors::OvhManagerError;
 use crate::handlers::{empty_response_to_result, response_to_result};
 use crate::schemas::ai::jobs::spec::JobSpec;
 use crate::schemas::ai::jobs::AIJob;
@@ -10,7 +9,7 @@ impl OvhCloudManager {
         &self,
         project_id: &str,
         parameters: Option<&[(&str, &str)]>,
-    ) -> Result<Vec<AIJob>, Box<dyn Error + Send + Sync>> {
+    ) -> Result<Vec<AIJob>, OvhManagerError> {
         let url = format!("/cloud/project/{}/ai/job", project_id);
         let response = self.client.get(&url, parameters).await?;
 
@@ -21,7 +20,7 @@ impl OvhCloudManager {
         &self,
         project_id: &str,
         job_id: &str,
-    ) -> Result<AIJob, Box<dyn Error + Send + Sync>> {
+    ) -> Result<AIJob, OvhManagerError> {
         let url = format!("/cloud/project/{}/ai/job/{}", project_id, job_id);
         let response = self.client.get(&url, None).await?;
 
@@ -32,7 +31,7 @@ impl OvhCloudManager {
         &self,
         project_id: &str,
         data: &JobSpec,
-    ) -> Result<AIJob, Box<dyn Error + Send + Sync>> {
+    ) -> Result<AIJob, OvhManagerError> {
         let url = format!("/cloud/project/{}/ai/job", project_id);
         let response = self.client.post(&url, data).await?;
 
@@ -44,7 +43,7 @@ impl OvhCloudManager {
         project_id: &str,
         job_id: &str,
         force: bool,
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+    ) -> Result<(), OvhManagerError> {
         let url = format!("/cloud/project/{}/ai/job/{}", project_id, job_id);
 
         let response = match force {

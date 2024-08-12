@@ -4,9 +4,10 @@ use reqwest::Url;
 use serde::Serialize;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
-use std::error::Error;
 use std::sync::RwLock;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use crate::errors::OvhManagerError;
 
 static ENDPOINTS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     HashMap::from([
@@ -48,9 +49,14 @@ impl OvhClient {
         application_key: &str,
         application_secret: &str,
         consumer_key: &str,
-    ) -> Option<Self> {
-        Some(Self {
-            endpoint: ENDPOINTS.get(endpoint)?,
+    ) -> Result<Self, OvhManagerError> {
+        let endpoint = match ENDPOINTS.get(endpoint) {
+            Some(value) => value,
+            None => return Err(OvhManagerError::EndpointNotFound),
+        };
+
+        Ok(Self {
+            endpoint,
             application_key: application_key.to_string(),
             application_secret: application_secret.to_string(),
             consumer_key: consumer_key.to_string(),
@@ -63,7 +69,7 @@ impl OvhClient {
         format!("{}{}", self.endpoint, path)
     }
 
-    pub async fn get_server_time(&self) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    pub async fn get_server_time(&self) -> Result<u64, OvhManagerError> {
         let headers = self.create_base_headers();
 
         let url = self.format_url("/auth/time");
@@ -80,7 +86,7 @@ impl OvhClient {
         Ok(time)
     }
 
-    pub async fn compute_time_delta(&self) -> Result<u64, Box<dyn Error + Send + Sync>> {
+    pub async fn compute_time_delta(&self) -> Result<u64, OvhManagerError> {
         let server_time = self.get_server_time().await?;
         let system_time = get_system_time();
 
@@ -126,7 +132,7 @@ impl OvhClient {
         method: &str,
         url: &str,
         body: &str,
-    ) -> Result<HeaderMap, Box<dyn Error + Send + Sync>> {
+    ) -> Result<HeaderMap, OvhManagerError> {
         let mut headers = self.create_base_headers();
 
         if self.time_delta.read().unwrap().is_none() {
@@ -153,11 +159,14 @@ impl OvhClient {
         &self,
         path: &str,
         parameters: Option<&[(&str, &str)]>,
-    ) -> Result<reqwest::Response, Box<dyn Error + Send + Sync>> {
+    ) -> Result<reqwest::Response, OvhManagerError> {
         let mut url = self.format_url(path);
 
         if let Some(values) = parameters {
-            url = Url::parse_with_params(&url, values)?.to_string();
+            url = match Url::parse_with_params(&url, values) {
+                Ok(value) => value.to_string(),
+                Err(_) => return Err(OvhManagerError::ParseUrlError),
+            }
         }
 
         let headers = self.create_headers("GET", &url, "").await?;
@@ -170,11 +179,14 @@ impl OvhClient {
         &self,
         path: &str,
         parameters: Option<&[(&str, &str)]>,
-    ) -> Result<reqwest::Response, Box<dyn Error + Send + Sync>> {
+    ) -> Result<reqwest::Response, OvhManagerError> {
         let mut url = self.format_url(path);
 
         if let Some(values) = parameters {
-            url = Url::parse_with_params(&url, values)?.to_string();
+            url = match Url::parse_with_params(&url, values) {
+                Ok(value) => value.to_string(),
+                Err(_) => return Err(OvhManagerError::ParseUrlError),
+            }
         }
 
         let headers = self.create_headers("DELETE", &url, "").await?;
@@ -187,7 +199,7 @@ impl OvhClient {
         &self,
         path: &str,
         data: &T,
-    ) -> Result<reqwest::Response, Box<dyn Error + Send + Sync>> {
+    ) -> Result<reqwest::Response, OvhManagerError> {
         let url = self.format_url(path);
         let body = serde_json::to_string(data)?;
         let headers = self.create_headers("POST", &url, &body).await?;
@@ -207,7 +219,7 @@ impl OvhClient {
         &self,
         path: &str,
         data: Option<&T>,
-    ) -> Result<reqwest::Response, Box<dyn Error + Send + Sync>> {
+    ) -> Result<reqwest::Response, OvhManagerError> {
         let url = self.format_url(path);
         let body = match data {
             Some(value) => serde_json::to_string(value)?,
