@@ -98,9 +98,10 @@ impl OvhClient {
             .await?
             .text()
             .await?;
-        let time: u64 = response.parse()?;
 
-        Ok(time)
+        response
+            .parse()
+            .map_err(OvhManagerError::ParseServerTimeError)
     }
 
     pub async fn compute_time_delta(&self) -> Result<u64, OvhManagerError> {

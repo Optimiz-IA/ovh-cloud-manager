@@ -48,15 +48,6 @@ impl From<serde_json::Error> for OvhManagerError {
     }
 }
 
-// Implement the conversion from `ParseIntError` to `OvhManagerError`.
-// This will be automatically called by `?` if a `ParseIntError`
-// needs to be converted into a `OvhManagerError`.
-impl From<ParseIntError> for OvhManagerError {
-    fn from(err: ParseIntError) -> OvhManagerError {
-        OvhManagerError::ParseServerTimeError(err)
-    }
-}
-
 // Implement the conversion from `HttpErrorMessage` to `OvhManagerError`.
 // This will be automatically called by `?` if a `HttpErrorMessage`
 // needs to be converted into a `OvhManagerError`.
