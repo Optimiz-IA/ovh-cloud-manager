@@ -12,11 +12,7 @@ mod tests {
             "consumer_key",
         );
 
-        assert!(res.is_err());
-
-        if let Err(err) = res {
-            assert!(matches!(err, OvhManagerError::EndpointNotFound(_)));
-        }
+        assert!(matches!(res, Err(OvhManagerError::EndpointNotFound(_))));
     }
 
     #[tokio::test]
