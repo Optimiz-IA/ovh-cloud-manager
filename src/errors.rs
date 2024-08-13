@@ -5,22 +5,24 @@ use crate::schemas::common::HttpErrorMessage;
 
 #[derive(Debug)]
 pub enum OvhManagerError {
-    EndpointNotFound,
+    EndpointNotFound(String),
+    ParseUrlError(String),
     ReqwestError(reqwest::Error),
-    ParseUrlError,
-    ParseIntError(ParseIntError),
     ServerError(HttpErrorMessage),
+    ParseServerTimeError(ParseIntError),
     SerdeJsonError(serde_json::Error),
 }
 
 impl fmt::Display for OvhManagerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            OvhManagerError::EndpointNotFound => write!(f, "Endpoint not found"),
+            OvhManagerError::EndpointNotFound(endpoint) => {
+                write!(f, "Endpoint \"{endpoint}\" not found")
+            }
+            OvhManagerError::ParseUrlError(url) => write!(f, "Failed to parse URL: {url}"),
             OvhManagerError::ReqwestError(err) => write!(f, "{err}"),
-            OvhManagerError::ParseUrlError => write!(f, "Fail to parse URL"),
-            OvhManagerError::ParseIntError(err) => write!(f, "{err}"),
             OvhManagerError::ServerError(err) => write!(f, "{err}"),
+            OvhManagerError::ParseServerTimeError(err) => write!(f, "{err}"),
             OvhManagerError::SerdeJsonError(err) => write!(f, "{err}"),
         }
     }
@@ -37,18 +39,27 @@ impl From<reqwest::Error> for OvhManagerError {
     }
 }
 
+// Implement the conversion from `serde_json::Error` to `OvhManagerError`.
+// This will be automatically called by `?` if a `serde_json::Error`
+// needs to be converted into a `OvhManagerError`.
 impl From<serde_json::Error> for OvhManagerError {
     fn from(err: serde_json::Error) -> OvhManagerError {
         OvhManagerError::SerdeJsonError(err)
     }
 }
 
+// Implement the conversion from `ParseIntError` to `OvhManagerError`.
+// This will be automatically called by `?` if a `ParseIntError`
+// needs to be converted into a `OvhManagerError`.
 impl From<ParseIntError> for OvhManagerError {
     fn from(err: ParseIntError) -> OvhManagerError {
-        OvhManagerError::ParseIntError(err)
+        OvhManagerError::ParseServerTimeError(err)
     }
 }
 
+// Implement the conversion from `HttpErrorMessage` to `OvhManagerError`.
+// This will be automatically called by `?` if a `HttpErrorMessage`
+// needs to be converted into a `OvhManagerError`.
 impl From<HttpErrorMessage> for OvhManagerError {
     fn from(err: HttpErrorMessage) -> OvhManagerError {
         OvhManagerError::ServerError(err)

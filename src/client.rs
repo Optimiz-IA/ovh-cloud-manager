@@ -34,6 +34,7 @@ fn insert_sensitive_header(headers: &mut HeaderMap, header_name: &'static str, v
     headers.insert(header_name, header_value);
 }
 
+#[derive(Debug)]
 pub struct OvhClient {
     endpoint: &'static str,
     application_key: String,
@@ -51,8 +52,8 @@ impl OvhClient {
         consumer_key: &str,
     ) -> Result<Self, OvhManagerError> {
         let endpoint = match ENDPOINTS.get(endpoint) {
-            Some(value) => value,
-            None => return Err(OvhManagerError::EndpointNotFound),
+            Some(value) => *value,
+            None => return Err(OvhManagerError::EndpointNotFound(endpoint.to_string())),
         };
 
         Ok(Self {
@@ -79,7 +80,7 @@ impl OvhClient {
         match parameters {
             Some(values) => match Url::parse_with_params(&url, values) {
                 Ok(value) => Ok(value.to_string()),
-                Err(_) => Err(OvhManagerError::ParseUrlError),
+                Err(_) => Err(OvhManagerError::ParseUrlError(url)),
             },
             None => Ok(url),
         }
